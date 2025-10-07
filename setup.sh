@@ -457,11 +457,11 @@ echo -ne "
 if [[ ! -d "/sys/firmware/efi" ]]; then
     grub-install --boot-directory=/mnt/boot "${DISK}"
 fi
-echo -ne "
-# -------------------------------------------------------------------------
-#                     Checking for low memory systems <8G
-# -------------------------------------------------------------------------
-# "
+# echo -ne "
+# # -------------------------------------------------------------------------
+# #                     Checking for low memory systems <8G
+# # -------------------------------------------------------------------------
+# # "
 # TOTAL_MEM=$(cat /proc/meminfo | grep -i 'memtotal' | grep -o '[[:digit:]]*')
 # if [[  $TOTAL_MEM -lt 8000000 ]]; then
 #     # Put swap into the actual system, not into RAM disk, otherwise there is no point in it, it'll cache RAM into RAM. So, /mnt/ everything.
@@ -612,7 +612,6 @@ cat <<'EOF'
 EOF
 Final Setup and Configurations
 GRUB EFI Bootloader Install & Check
-EOF
 if [[ -d "/sys/firmware/efi" ]]; then
     grub-install --efi-directory=/boot ${DISK}
 fi
@@ -673,4 +672,3 @@ sed -i 's/^%wheel ALL=(ALL:ALL) NOPASSWD: ALL/# %wheel ALL=(ALL:ALL) NOPASSWD: A
 # Add sudo rights
 sed -i 's/^# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-EOF
