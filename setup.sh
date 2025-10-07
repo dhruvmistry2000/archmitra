@@ -437,9 +437,9 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 if [[ ! -d "/sys/firmware/efi" ]]; then
-    pacstrap /mnt base base-devel linux linux-firmware --noconfirm --needed
+    pacstrap /mnt base base-devel linux curl linux-firmware --noconfirm --needed
 else
-    pacstrap /mnt base base-devel linux linux-firmware efibootmgr --noconfirm --needed
+    pacstrap /mnt base base-devel linux curl linux-firmware efibootmgr --noconfirm --needed
 fi
 echo "keyserver hkp://keyserver.ubuntu.com" >> /mnt/etc/pacman.d/gnupg/gpg.conf
 cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
