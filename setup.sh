@@ -648,19 +648,19 @@ echo "  NetworkManager enabled"
 systemctl enable reflector.timer
 echo "  Reflector enabled"
 
-echo -ne "
-read -p "
--------------------------------------------------------------------------
-                    Optional: Run Post-Install Script
--------------------------------------------------------------------------
-"
-Would you like to run a post-install script (e.g., Hyprland setup)? [y/N]: " run_post_install
+# echo -ne "
+# read -p "
+# -------------------------------------------------------------------------
+#                     Optional: Run Post-Install Script
+# -------------------------------------------------------------------------
+# "
+# Would you like to run a post-install script (e.g., Hyprland setup)? [y/N]: " run_post_install
 
-if [[ \"\$run_post_install\" =~ ^[Yy]$ ]]; then
-    # Hyprland install (optional): paste your curl command below (kept commented by default)
-    # Example:
-    arch-chroot /mnt /bin/bash -lc "curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/myhyprland/main/setup.sh | bash"
-fi
+# if [[ \"\$run_post_install\" =~ ^[Yy]$ ]]; then
+#     # Hyprland install (optional): paste your curl command below (kept commented by default)
+#     # Example:
+#     arch-chroot /mnt /bin/bash -lc "curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/myhyprland/main/setup.sh | bash"
+# fi
 
 echo -ne "
 -------------------------------------------------------------------------
