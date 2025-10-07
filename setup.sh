@@ -458,29 +458,29 @@ if [[ ! -d "/sys/firmware/efi" ]]; then
     grub-install --boot-directory=/mnt/boot "${DISK}"
 fi
 echo -ne "
--------------------------------------------------------------------------
-                    Checking for low memory systems <8G
--------------------------------------------------------------------------
-"
-TOTAL_MEM=$(cat /proc/meminfo | grep -i 'memtotal' | grep -o '[[:digit:]]*')
-if [[  $TOTAL_MEM -lt 8000000 ]]; then
-    # Put swap into the actual system, not into RAM disk, otherwise there is no point in it, it'll cache RAM into RAM. So, /mnt/ everything.
-    mkdir -p /mnt/opt/swap # make a dir that we can apply NOCOW to to make it btrfs-friendly.
-    if findmnt -n -o FSTYPE /mnt | grep -q btrfs; then
-        chattr +C /mnt/opt/swap # apply NOCOW, btrfs needs that.
-    fi
-    dd if=/dev/zero of=/mnt/opt/swap/swapfile bs=1M count=2048 status=progress
-    chmod 600 /mnt/opt/swap/swapfile # set permissions.
-    chown root /mnt/opt/swap/swapfile
-    mkswap /mnt/opt/swap/swapfile
-    swapon /mnt/opt/swap/swapfile
-    # The line below is written to /mnt/ but doesn't contain /mnt/, since it's just / for the system itself.
-    echo "/opt/swap/swapfile    none    swap    sw    0    0" >> /mnt/etc/fstab # Add swap to fstab, so it KEEPS working after installation.
-fi
+# -------------------------------------------------------------------------
+#                     Checking for low memory systems <8G
+# -------------------------------------------------------------------------
+# "
+# TOTAL_MEM=$(cat /proc/meminfo | grep -i 'memtotal' | grep -o '[[:digit:]]*')
+# if [[  $TOTAL_MEM -lt 8000000 ]]; then
+#     # Put swap into the actual system, not into RAM disk, otherwise there is no point in it, it'll cache RAM into RAM. So, /mnt/ everything.
+#     mkdir -p /mnt/opt/swap # make a dir that we can apply NOCOW to to make it btrfs-friendly.
+#     if findmnt -n -o FSTYPE /mnt | grep -q btrfs; then
+#         chattr +C /mnt/opt/swap # apply NOCOW, btrfs needs that.
+#     fi
+#     dd if=/dev/zero of=/mnt/opt/swap/swapfile bs=1M count=2048 status=progress
+#     chmod 600 /mnt/opt/swap/swapfile # set permissions.
+#     chown root /mnt/opt/swap/swapfile
+#     mkswap /mnt/opt/swap/swapfile
+#     swapon /mnt/opt/swap/swapfile
+#     # The line below is written to /mnt/ but doesn't contain /mnt/, since it's just / for the system itself.
+#     echo "/opt/swap/swapfile    none    swap    sw    0    0" >> /mnt/etc/fstab # Add swap to fstab, so it KEEPS working after installation.
+# fi
 
-gpu_type=$(lspci | grep -E "VGA|3D|Display")
+# gpu_type=$(lspci | grep -E "VGA|3D|Display")
 
-arch-chroot /mnt /bin/bash -c "KEYMAP='${KEYMAP}' /bin/bash" 
+# arch-chroot /mnt /bin/bash -c "KEYMAP='${KEYMAP}' /bin/bash" 
 
 echo -ne "
 -------------------------------------------------------------------------
