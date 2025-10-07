@@ -437,9 +437,9 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 if [[ ! -d "/sys/firmware/efi" ]]; then
-    pacstrap /mnt base base-devel linux curl linux-firmware --noconfirm --needed
+    pacstrap /mnt base base-devel linux curl git linux-firmware --noconfirm --needed
 else
-    pacstrap /mnt base base-devel linux curl linux-firmware efibootmgr --noconfirm --needed
+    pacstrap /mnt base base-devel linux curl git linux-firmware efibootmgr --noconfirm --needed
 fi
 echo "keyserver hkp://keyserver.ubuntu.com" >> /mnt/etc/pacman.d/gnupg/gpg.conf
 cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
@@ -649,13 +649,18 @@ systemctl enable reflector.timer
 echo "  Reflector enabled"
 
 echo -ne "
+read -p "
 -------------------------------------------------------------------------
                     Optional: Run Post-Install Script
 -------------------------------------------------------------------------
 "
-# Hyprland install (optional): paste your curl command below (kept commented by default)
-# Example:
-arch-chroot /mnt /bin/bash -lc "curl -fsSL curl -sSL https://raw.githubusercontent.com/dhruvmistry2000/myhyprland/main/setup.sh | bash| bash"
+Would you like to run a post-install script (e.g., Hyprland setup)? [y/N]: " run_post_install
+
+if [[ \"\$run_post_install\" =~ ^[Yy]$ ]]; then
+    # Hyprland install (optional): paste your curl command below (kept commented by default)
+    # Example:
+    arch-chroot /mnt /bin/bash -lc "curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/myhyprland/main/setup.sh | bash"
+fi
 
 echo -ne "
 -------------------------------------------------------------------------
