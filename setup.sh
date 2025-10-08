@@ -733,15 +733,24 @@ EOF
 # Make the script executable
 chmod +x /mnt/final-setup.sh
 
-# Run it inside chroot
+# Verify EFI partition is mounted
+if [[ -d "/sys/firmware/efi" ]]; then
+    echo "UEFI system detected. Verifying EFI partition mount..."
+    if ! mountpoint -q /mnt/boot; then
+        echo "EFI partition not mounted. Mounting now..."
+        mount -U "${BOOT_UUID}" /mnt/boot/
+    fi
+fi
+
+# Run it inside chroot with actual variables
 arch-chroot /mnt /bin/bash -c \
-"KEYMAP='us' \
-USERNAME='yourusername' \
-PASSWORD='yourpassword' \
-NAME_OF_MACHINE='archlinux' \
-DISK='/dev/sdX' \
-FS='luks' \
-ENCRYPTED_PARTITION_UUID='your-uuid-here' \
+"KEYMAP='${KEYMAP}' \
+USERNAME='${USERNAME}' \
+PASSWORD='${PASSWORD}' \
+NAME_OF_MACHINE='${NAME_OF_MACHINE}' \
+DISK='${DISK}' \
+FS='${FS}' \
+ENCRYPTED_PARTITION_UUID='${ENCRYPTED_PARTITION_UUID}' \
 /final-setup.sh"
 
 # Clean up
@@ -754,4 +763,4 @@ echo -ne "
 "
 echo "Arch Linux has been installed successfully!"
 echo "You can now reboot and remove the installation media."
-echo "After reboot, log in with username: yourusername"
+echo "After reboot, log in with username: $USERNAME"
