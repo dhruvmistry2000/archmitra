@@ -678,6 +678,13 @@ echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
 echo "$NAME_OF_MACHINE" > /etc/hostname
 
+# Ensure sudo is installed and configure sudo access
+echo "Configuring sudo access for $USERNAME..."
+pacman -S --noconfirm --needed sudo
+echo "$USERNAME ALL=(ALL) ALL" >> /etc/sudoers.d/$USERNAME
+chmod 440 /etc/sudoers.d/$USERNAME
+echo "Sudo access configured for $USERNAME"
+
 if [[ "${FS}" == "luks" ]]; then
     sed -i 's/filesystems/encrypt filesystems/g' /etc/mkinitcpio.conf
     mkinitcpio -p linux
