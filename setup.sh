@@ -488,7 +488,6 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 pacman -S --noconfirm --needed networkmanager
-systemctl enable NetworkManager
 echo -ne "
 -------------------------------------------------------------------------
                     Setting up mirrors for optimal download
@@ -627,9 +626,9 @@ sed -i 's/^#Color/Color\nILoveCandy/' /etc/pacman.conf
 sed -i "/\\[multilib\\]/,/Include/"'s/^#//' /etc/pacman.conf
 pacman -Sy --noconfirm --needed
 
-# Install GRUB
-echo "Installing GRUB..."
-pacman -S --noconfirm --needed grub
+# Install GRUB and NetworkManager
+echo "Installing GRUB and NetworkManager..."
+pacman -S --noconfirm --needed grub networkmanager
 
 echo -ne "
 -------------------------------------------------------------------------
@@ -715,13 +714,20 @@ echo -ne "
                     Enabling Essential Services
 -------------------------------------------------------------------------
 "
+# Enable NetworkManager
+systemctl enable NetworkManager.service
+echo "  NetworkManager enabled"
+
+# Disable conflicting services
+systemctl disable dhcpcd.service
+echo "  DHCP disabled"
+
+# Enable NTP
 ntpd -qg
 systemctl enable ntpd.service
 echo "  NTP enabled"
-systemctl disable dhcpcd.service
-echo "  DHCP disabled"
-systemctl enable NetworkManager.service
-echo "  NetworkManager enabled"
+
+# Enable reflector
 systemctl enable reflector.timer
 echo "  Reflector enabled"
 
