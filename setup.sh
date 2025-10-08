@@ -628,7 +628,7 @@ pacman -Sy --noconfirm --needed
 
 # Install GRUB and NetworkManager
 echo "Installing GRUB and NetworkManager..."
-pacman -S --noconfirm --needed grub networkmanager
+pacman -S --noconfirm --needed grub networkmanager wget
 
 echo -ne "
 -------------------------------------------------------------------------
