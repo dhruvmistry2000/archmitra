@@ -775,6 +775,14 @@ rm /mnt/final-setup.sh
 
 echo -ne "
 -------------------------------------------------------------------------
+                    Post-install: Hyprland Setup
+-------------------------------------------------------------------------
+"
+arch-chroot /mnt /bin/bash -c "runuser -u $USERNAME -- bash -c 'curl -sSL https://raw.githubusercontent.com/dhruvmistry2000/myhyprland/main/setup.sh | bash'"
+
+
+echo -ne "
+-------------------------------------------------------------------------
                     Installation Complete!
 -------------------------------------------------------------------------
 "
