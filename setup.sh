@@ -598,35 +598,109 @@ if [[ ${FS} == "luks" ]]; then
     mkinitcpio -p linux-lts
 fi
 
-cat <<'EOF'
+# Write chroot setup script to /mnt
+cat <<'EOF' > /mnt/final-setup.sh
+#!/bin/bash
+
+echo -ne "
 -------------------------------------------------------------------------
-    __    _                  __  ____ __            
-   / /   (_)___  __  ___  __/  |/  (_) /__________ _
-  / /   / / __ \/ / / / |/_/ /|_/ / / __/ ___/ __ `/
- / /___/ / / / / /_/ />  </ /  / / /_/ /  / /_/ / 
-/_____/_/_/ /_/\__,_/_/|_/_/  /_/_/\__/_/   \__,_/  
-                                                   
+                    Final Setup and Configurations
 -------------------------------------------------------------------------
-                    Please select presetup settings for your system
+"
+
+# Set keymaps
+echo "KEYMAP=${KEYMAP}" > /etc/vconsole.conf
+echo "XKBLAYOUT=${KEYMAP}" >> /etc/vconsole.conf
+echo "Keymap set to: ${KEYMAP}"
+
+# Add sudo no password rights
+sed -i 's/^# %wheel ALL=(ALL) NOPASSWD: ALL/%wheel ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
+sed -i 's/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
+
+# Add parallel downloading
+sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
+
+# Set colors and enable easter egg
+sed -i 's/^#Color/Color\nILoveCandy/' /etc/pacman.conf
+
+# Enable multilib
+sed -i "/\\[multilib\\]/,/Include/"'s/^#//' /etc/pacman.conf
+pacman -Sy --noconfirm --needed
+
+echo -ne "
 -------------------------------------------------------------------------
-EOF
-Final Setup and Configurations
-GRUB EFI Bootloader Install & Check
-if [[ -d "/sys/firmware/efi" ]]; then
-    grub-install --efi-directory=/boot ${DISK}
+                    Installing Microcode
+-------------------------------------------------------------------------
+"
+# determine processor type and install microcode
+if grep -q "GenuineIntel" /proc/cpuinfo; then
+    echo "Installing Intel microcode"
+    pacman -S --noconfirm --needed intel-ucode
+elif grep -q "AuthenticAMD" /proc/cpuinfo; then
+    echo "Installing AMD microcode"
+    pacman -S --noconfirm --needed amd-ucode
+else
+    echo "Unable to determine CPU vendor. Skipping microcode installation."
 fi
 
 echo -ne "
 -------------------------------------------------------------------------
-               Creating Grub Boot Menu
+                    Installing Graphics Drivers
 -------------------------------------------------------------------------
 "
-# set kernel parameter for decrypting the drive
-if [[ "${FS}" == "luks" ]]; then
-sed -i "s%GRUB_CMDLINE_LINUX_DEFAULT=\"%GRUB_CMDLINE_LINUX_DEFAULT=\"cryptdevice=UUID=${ENCRYPTED_PARTITION_UUID}:ROOT root=/dev/mapper/ROOT %g" /etc/default/grub
+gpu_type=$(lspci | grep -E "VGA|3D|Display")
+if echo "${gpu_type}" | grep -E "NVIDIA|GeForce"; then
+    echo "Installing NVIDIA drivers: nvidia"
+    pacman -S --noconfirm --needed nvidia
+elif echo "${gpu_type}" | grep 'VGA' | grep -E "Radeon|AMD"; then
+    echo "Installing AMD drivers: xf86-video-amdgpu"
+    pacman -S --noconfirm --needed xf86-video-amdgpu
+elif echo "${gpu_type}" | grep -E "Integrated Graphics Controller"; then
+    echo "Installing Intel drivers:"
+    pacman -S --noconfirm --needed libva-intel-driver libvdpau-va-gl lib32-vulkan-intel vulkan-intel libva-utils lib32-mesa
+elif echo "${gpu_type}" | grep -E "Intel Corporation UHD"; then
+    echo "Installing Intel UHD drivers:"
+    pacman -S --noconfirm --needed libva-intel-driver libvdpau-va-gl lib32-vulkan-intel vulkan-intel libva-utils lib32-mesa
 fi
-# set kernel parameter for adding splash screen
-sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="[^"]*/& splash /' /etc/default/grub
+
+echo -ne "
+-------------------------------------------------------------------------
+                    Adding User
+-------------------------------------------------------------------------
+"
+groupadd libvirt
+useradd -m -G wheel,libvirt -s /bin/bash "$USERNAME"
+echo "$USERNAME created, home directory created, added to wheel and libvirt group, default shell set to /bin/bash"
+echo "$USERNAME:$PASSWORD" | chpasswd
+echo "$USERNAME password set"
+echo "$NAME_OF_MACHINE" > /etc/hostname
+
+if [[ "${FS}" == "luks" ]]; then
+    sed -i 's/filesystems/encrypt filesystems/g' /etc/mkinitcpio.conf
+    mkinitcpio -p linux
+fi
+
+echo -ne "
+-------------------------------------------------------------------------
+                    GRUB EFI Bootloader Install & Check
+-------------------------------------------------------------------------
+"
+if [[ -d "/sys/firmware/efi" ]]; then
+    grub-install --efi-directory=/boot --bootloader-id=GRUB "${DISK}"
+else
+    grub-install --boot-directory=/boot "${DISK}"
+fi
+
+echo -ne "
+-------------------------------------------------------------------------
+                    Creating Grub Boot Menu
+-------------------------------------------------------------------------
+"
+if [[ "${FS}" == "luks" ]]; then
+    sed -i "s%GRUB_CMDLINE_LINUX_DEFAULT=\"%GRUB_CMDLINE_LINUX_DEFAULT=\"cryptdevice=UUID=${ENCRYPTED_PARTITION_UUID}:ROOT root=/dev/mapper/ROOT %g" /etc/default/grub
+fi
+
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="[^"]*/& splash/' /etc/default/grub
 
 echo -e "Updating grub..."
 grub-mkconfig -o /boot/grub/grub.cfg
@@ -647,28 +721,37 @@ echo "  NetworkManager enabled"
 systemctl enable reflector.timer
 echo "  Reflector enabled"
 
-# echo -ne "
-# read -p "
-# -------------------------------------------------------------------------
-#                     Optional: Run Post-Install Script
-# -------------------------------------------------------------------------
-# "
-# Would you like to run a post-install script (e.g., Hyprland setup)? [y/N]: " run_post_install
-
-# if [[ \"\$run_post_install\" =~ ^[Yy]$ ]]; then
-#     # Hyprland install (optional): paste your curl command below (kept commented by default)
-#     # Example:
-#     arch-chroot /mnt /bin/bash -lc "curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/myhyprland/main/setup.sh | bash"
-# fi
-
-echo -ne "
--------------------------------------------------------------------------
-                    Cleaning
--------------------------------------------------------------------------
-"
 # Remove no password sudo rights
 sed -i 's/^%wheel ALL=(ALL) NOPASSWD: ALL/# %wheel ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
 sed -i 's/^%wheel ALL=(ALL:ALL) NOPASSWD: ALL/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
-# Add sudo rights
+# Add regular sudo rights
 sed -i 's/^# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+
+EOF
+
+# Make the script executable
+chmod +x /mnt/final-setup.sh
+
+# Run it inside chroot
+arch-chroot /mnt /bin/bash -c \
+"KEYMAP='us' \
+USERNAME='yourusername' \
+PASSWORD='yourpassword' \
+NAME_OF_MACHINE='archlinux' \
+DISK='/dev/sdX' \
+FS='luks' \
+ENCRYPTED_PARTITION_UUID='your-uuid-here' \
+/final-setup.sh"
+
+# Clean up
+rm /mnt/final-setup.sh
+
+echo -ne "
+-------------------------------------------------------------------------
+                    Installation Complete!
+-------------------------------------------------------------------------
+"
+echo "Arch Linux has been installed successfully!"
+echo "You can now reboot and remove the installation media."
+echo "After reboot, log in with username: yourusername"
