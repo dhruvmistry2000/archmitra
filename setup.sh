@@ -627,6 +627,10 @@ sed -i 's/^#Color/Color\nILoveCandy/' /etc/pacman.conf
 sed -i "/\\[multilib\\]/,/Include/"'s/^#//' /etc/pacman.conf
 pacman -Sy --noconfirm --needed
 
+# Install GRUB
+echo "Installing GRUB..."
+pacman -S --noconfirm --needed grub
+
 echo -ne "
 -------------------------------------------------------------------------
                     Installing Microcode
